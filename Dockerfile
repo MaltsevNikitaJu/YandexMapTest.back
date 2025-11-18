@@ -21,7 +21,7 @@ RUN cat > .env << 'EOF'
 APP_NAME="Yandex Map Test Backend"
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=http://api.maltsevnikitaju-yandexmaptest-front-2e25.twc1.net
+APP_URL=https://api.maltsevnikitaju-yandexmaptest-front-2e25.twc1.net
 
 DB_CONNECTION=sqlite
 DB_DATABASE=/app/database/database.sqlite
