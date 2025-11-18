@@ -1,51 +1,22 @@
-FROM php:8.3-apache
+FROM php:8.3-cli
 
-# Устанавливаем системные зависимости
+WORKDIR /app
+
+# Копируем только нужные файлы
+COPY . .
+
+# Устанавливаем зависимости
 RUN apt-get update && apt-get install -y \
-    curl \
-    zip unzip \
-    libzip-dev \
-    libcurl4-openssl-dev \
-    libxml2-dev \
-    libsqlite3-dev \
-    libonig-dev \
-    && docker-php-ext-install \
-        zip \
-        curl \
-        xml \
-        mbstring \
-        pdo_sqlite \
-        tokenizer \
-    && rm -rf /var/lib/apt/lists/*
+    curl zip unzip libzip-dev libsqlite3-dev \
+    && docker-php-ext-install zip pdo_sqlite
 
 # Устанавливаем Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Включаем модуль rewrite для Apache
-RUN a2enmod rewrite
+# Устанавливаем зависимости
+RUN composer install --no-dev --optimize-autoloader
 
-# Устанавливаем рабочую директорию
-WORKDIR /var/www/html
-
-# Копируем файлы проекта
-COPY . .
-
-# Создаем директории для Laravel
-RUN mkdir -p storage/framework/cache \
-    storage/framework/sessions \
-    storage/framework/views \
-    storage/logs \
-    bootstrap/cache \
-    database
-
-# Создаем SQLite базу данных
-RUN touch database/database.sqlite
-
-# Устанавливаем права
-RUN chown -R www-data:www-data storage bootstrap/cache database
-RUN chmod -R 775 storage bootstrap/cache database
-
-# ГЕНЕРАЦИЯ .env ФАЙЛА
+# СОЗДАЕМ ПРАВИЛЬНЫЙ .env АВТОМАТИЧЕСКИ
 RUN cat > .env << 'EOF'
 APP_NAME="Yandex Map Test Backend"
 APP_ENV=production
@@ -53,7 +24,7 @@ APP_DEBUG=false
 APP_URL=https://maltsevnikitaju-yandexmaptest-back-ce11.twc1.net
 
 DB_CONNECTION=sqlite
-DB_DATABASE=/var/www/html/database/database.sqlite
+DB_DATABASE=/app/database/database.sqlite
 
 SESSION_DRIVER=cookie
 SESSION_LIFETIME=120
@@ -63,8 +34,7 @@ SESSION_DOMAIN=null
 SESSION_SECURE_COOKIE=true
 SESSION_SAME_SITE=none
 
-SANCTUM_STATEFUL_DOMAINS=localhost:5173,localhost:3000,127.0.0.1:5173
-FRONTEND_URL=http://localhost:5173
+SANCTUM_STATEFUL_DOMAINS=maltsevnikitaju-yandexmaptest-front-2e25.twc1.net,localhost:5173
 
 BROADCAST_CONNECTION=log
 FILESYSTEM_DISK=local
@@ -77,13 +47,7 @@ MAIL_FROM_ADDRESS="hello@example.com"
 MAIL_FROM_NAME="${APP_NAME}"
 EOF
 
-# Устанавливаем зависимости Composer
-RUN composer install --no-dev --optimize-autoloader
-
-# Генерируем ключ приложения
-RUN php artisan key:generate --force
-
-# НАСТРАИВАЕМ CORS ПРАВИЛЬНО
+# СОЗДАЕМ CORS КОНФИГ АВТОМАТИЧЕСКИ
 RUN cat > config/cors.php << 'EOF'
 <?php
 
@@ -93,10 +57,8 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'http://localhost:5173',
-        'http://localhost:3000',
-        'https://localhost:5173',
-        'https://maltsevnikitaju-yandexmaptest-back-ce11.twc1.net',
+        'https://maltsevnikitaju-yandexmaptest-front-2e25.twc1.net',
+        'http://localhost:5173'
     ],
 
     'allowed_origins_patterns' => [],
@@ -111,34 +73,8 @@ return [
 ];
 EOF
 
-# НАСТРАИВАЕМ SANCTUM
-RUN cat > config/sanctum.php << 'EOF'
-<?php
-
-use Laravel\Sanctum\Sanctum;
-
-return [
-    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
-        '%s%s',
-        'localhost,localhost:3000,localhost:5173,127.0.0.1,127.0.0.1:8000,::1',
-        Sanctum::currentApplicationUrlWithPort()
-    ))),
-
-    'guard' => ['web'],
-
-    'expiration' => null,
-
-    'token_prefix' => env('SANCTUM_TOKEN_PREFIX', ''),
-
-    'middleware' => [
-        'authenticate_session' => Laravel\Sanctum\Http\Middleware\AuthenticateSession::class,
-        'encrypt_cookies' => Illuminate\Cookie\Middleware\EncryptCookies::class,
-        'validate_csrf_token' => Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
-    ],
-];
-EOF
-
-# СОЗДАЕМ CORS MIDDLEWARE
+# СОЗДАЕМ CORS MIDDLEWARE АВТОМАТИЧЕСКИ
+RUN mkdir -p app/Http/Middleware
 RUN cat > app/Http/Middleware/Cors.php << 'EOF'
 <?php
 
@@ -151,9 +87,8 @@ class Cors
     public function handle($request, Closure $next)
     {
         $allowedOrigins = [
-            'http://localhost:5173',
-            'http://localhost:3000',
-            'https://maltsevnikitaju-yandexmaptest-back-ce11.twc1.net',
+            'https://maltsevnikitaju-yandexmaptest-front-2e25.twc1.net',
+            'http://localhost:5173'
         ];
 
         $origin = $request->header('Origin');
@@ -227,63 +162,20 @@ class Kernel extends HttpKernel
 }
 EOF
 
-# НАСТРАИВАЕМ CSRF ИСКЛЮЧЕНИЯ
-RUN cat > app/Http/Middleware/VerifyCsrfToken.php << 'EOF'
-<?php
+# Создаем базу данных
+RUN mkdir -p database && touch database/database.sqlite
 
-namespace App\Http\Middleware;
-
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken as Middleware;
-
-class VerifyCsrfToken extends Middleware
-{
-    protected $except = [
-        'api/*',
-        'sanctum/csrf-cookie'
-    ];
-}
-EOF
-
-# Запускаем миграции
+# Генерируем ключ и запускаем миграции
+RUN php artisan key:generate --force
 RUN php artisan migrate --force
 
-# Создаем симлинк для storage
-RUN php artisan storage:link
+# Очищаем кэш
+RUN php artisan config:clear
+RUN php artisan cache:clear
+RUN php artisan route:clear
 
-# Создаем оптимизированные файлы
-RUN php artisan config:cache
-RUN php artisan route:cache
-RUN php artisan view:cache
+# Используем порт 3000 чтобы обойти возможные конфликты с Caddy
+EXPOSE 3000
 
-# Создаем .htaccess для Apache
-RUN cat > .htaccess << 'EOF'
-<IfModule mod_rewrite.c>
-    <IfModule mod_negotiation.c>
-        Options -MultiViews -Indexes
-    </IfModule>
-
-    RewriteEngine On
-
-    # Handle Authorization Header
-    RewriteCond %{HTTP:Authorization} .
-    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-
-    # Redirect Trailing Slashes If Not A Folder...
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_URI} (.+)/$
-    RewriteRule ^ %1 [L,R=301]
-
-    # Send Requests To Front Controller...
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^ index.php [L]
-</IfModule>
-EOF
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/ || exit 1
-
-EXPOSE 80
-
-CMD ["apache2-foreground"]
+# Запускаем на порту 3000
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=3000"]
