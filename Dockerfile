@@ -21,7 +21,7 @@ RUN cat > .env << 'EOF'
 APP_NAME="Yandex Map Test Backend"
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://maltsevnikitaju-yandexmaptest-back-ce11.twc1.net
+APP_URL=https://api.maltsevnikitaju-yandexmaptest-front-2e25.twc1.net
 
 DB_CONNECTION=sqlite
 DB_DATABASE=/app/database/database.sqlite
@@ -30,11 +30,11 @@ SESSION_DRIVER=cookie
 SESSION_LIFETIME=120
 SESSION_ENCRYPT=false
 SESSION_PATH=/
-SESSION_DOMAIN=null
+SESSION_DOMAIN=.maltsevnikitaju-yandexmaptest-front-2e25.twc1.net
 SESSION_SECURE_COOKIE=true
-SESSION_SAME_SITE=none
+SESSION_SAME_SITE=lax
 
-SANCTUM_STATEFUL_DOMAINS=maltsevnikitaju-yandexmaptest-front-2e25.twc1.net,localhost:5173
+SANCTUM_STATEFUL_DOMAINS=maltsevnikitaju-yandexmaptest-front-2e25.twc1.net,api.maltsevnikitaju-yandexmaptest-front-2e25.twc1.net,localhost:5173
 
 BROADCAST_CONNECTION=log
 FILESYSTEM_DISK=local
@@ -65,7 +65,7 @@ return [
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
+    'exposed_headers' => ['X-XSRF-TOKEN'],
 
     'max_age' => 0,
 
@@ -101,6 +101,7 @@ class Cors
             $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-TOKEN, X-XSRF-TOKEN');
             $response->headers->set('Access-Control-Allow-Credentials', 'true');
             $response->headers->set('Access-Control-Max-Age', '86400');
+            $response->headers->set('Access-Control-Expose-Headers', 'X-XSRF-TOKEN');
             
             return $response;
         }

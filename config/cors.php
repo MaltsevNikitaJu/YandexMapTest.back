@@ -15,23 +15,13 @@ return [
     |
     */
 
-    'paths' => ['*'],
-
-    'allowed_methods' => ['*'],
-
-    'allowed_origins' => [
-    'https://maltsevnikitaju-yandexmaptest-front-2e25.twc1.net',
-    'http://localhost:5173' 
-        ],
-
-    'allowed_origins_patterns' => [],
-
-    'allowed_headers' => ['*'],
-
-    'exposed_headers' => [],
-
-    'max_age' => 0,
-
-    'supports_credentials' => true,
+'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'logout'],
+'allowed_methods' => ['*'],
+'allowed_origins' => ['https://maltsevnikitaju-yandexmaptest-front-2e25.twc1.net'],
+'allowed_origins_patterns' => [],
+'allowed_headers' => ['*'],
+'exposed_headers' => ['X-XSRF-TOKEN'],
+'max_age' => 0,
+'supports_credentials' => true,
 
 ];
