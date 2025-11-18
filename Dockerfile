@@ -21,7 +21,7 @@ RUN cat > .env << 'EOF'
 APP_NAME="Yandex Map Test Backend"
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://api.maltsevnikitaju-yandexmaptest-front-2e25.twc1.net
+APP_URL=https://maltsevnikitaju-yandexmaptest-back-2e25.twc1.net
 
 DB_CONNECTION=sqlite
 DB_DATABASE=/app/database/database.sqlite
@@ -34,7 +34,7 @@ SESSION_DOMAIN=.maltsevnikitaju-yandexmaptest-front-2e25.twc1.net
 SESSION_SECURE_COOKIE=true
 SESSION_SAME_SITE=lax
 
-SANCTUM_STATEFUL_DOMAINS=maltsevnikitaju-yandexmaptest-front-2e25.twc1.net,api.maltsevnikitaju-yandexmaptest-front-2e25.twc1.net,localhost:5173
+SANCTUM_STATEFUL_DOMAINS=maltsevnikitaju-yandexmaptest-front-2e25.twc1.net,maltsevnikitaju-yandexmaptest-back-2e25.twc1.net,localhost:5173
 
 BROADCAST_CONNECTION=log
 FILESYSTEM_DISK=local
@@ -57,6 +57,7 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
+        'https://maltsevnikitaju-yandexmaptest-back-2e25.twc1.net',
         'https://maltsevnikitaju-yandexmaptest-front-2e25.twc1.net',
         'http://localhost:5173'
     ],
@@ -87,6 +88,7 @@ class Cors
     public function handle($request, Closure $next)
     {
         $allowedOrigins = [
+            'https://maltsevnikitaju-yandexmaptest-back-2e25.twc1.net',
             'https://maltsevnikitaju-yandexmaptest-front-2e25.twc1.net',
             'http://localhost:5173'
         ];
