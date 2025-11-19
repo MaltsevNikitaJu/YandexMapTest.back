@@ -34,6 +34,7 @@ ARG FRONTEND_URL=https://maltsevnikitaju-yandexmaptest-front-2e25.twc1.net
 ARG SESSION_DOMAIN=maltsevnikitaju-yandexmaptest-back-2e25.twc1.net
 ARG SESSION_COOKIE=yandex-map-test-session
 ARG SANCTUM_STATEFUL_DOMAINS=maltsevnikitaju-yandexmaptest-front-2e25.twc1.net
+ARG CSRF_COOKIE_DOMAIN=.twc1.net
 
 RUN cp .env.example .env \
     && sed -ri "s|^APP_ENV=.*|APP_ENV=production|; \
@@ -41,7 +42,10 @@ s|^APP_URL=.*|APP_URL=${APP_URL}|; \
 s|^FRONTEND_URL=.*|FRONTEND_URL=${FRONTEND_URL}|; \
 s|^SESSION_DOMAIN=.*|SESSION_DOMAIN=${SESSION_DOMAIN}|; \
 s|^SESSION_COOKIE=.*|SESSION_COOKIE=${SESSION_COOKIE}|; \
-s|^SANCTUM_STATEFUL_DOMAINS=.*|SANCTUM_STATEFUL_DOMAINS=${SANCTUM_STATEFUL_DOMAINS}|" .env \
+s|^SESSION_SAME_SITE=.*|SESSION_SAME_SITE=none|; \
+s|^SESSION_SECURE_COOKIE=.*|SESSION_SECURE_COOKIE=true|; \
+s|^SANCTUM_STATEFUL_DOMAINS=.*|SANCTUM_STATEFUL_DOMAINS=${SANCTUM_STATEFUL_DOMAINS}|; \
+s|^CSRF_COOKIE_DOMAIN=.*|CSRF_COOKIE_DOMAIN=${CSRF_COOKIE_DOMAIN}|" .env \
     && if [ -n \"${APP_KEY}\" ]; then sed -ri "s|^APP_KEY=.*|APP_KEY=${APP_KEY}|" .env; fi
 
 RUN if [ -z "${APP_KEY}" ]; then php artisan key:generate --force; fi
