@@ -52,6 +52,8 @@ RUN mkdir -p database && touch database/database.sqlite
 RUN chown -R www-data:www-data storage bootstrap/cache database \
     && chmod -R 775 storage bootstrap/cache database
 
+RUN php artisan migrate --force
+
 RUN php artisan config:cache \
     && php artisan route:cache \
     && php artisan view:cache
