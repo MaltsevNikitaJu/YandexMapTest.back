@@ -20,6 +20,7 @@ class ExposeCsrfToken
         $token = $request->session()->token();
 
         if ($token) {
+            $response->headers->set('X-CSRF-TOKEN', $token);
             $response->headers->set('X-XSRF-TOKEN', $token);
         }
 
