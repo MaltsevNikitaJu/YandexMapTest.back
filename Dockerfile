@@ -1,7 +1,8 @@
 FROM composer:2 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+ENV COMPOSER_ALLOW_SUPERUSER=1
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 FROM php:8.3-apache
 
@@ -10,7 +11,7 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 WORKDIR /var/www/html
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends git unzip curl \
+    && apt-get install -y --no-install-recommends git unzip curl libsqlite3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN docker-php-ext-install pdo_mysql pdo_sqlite \
@@ -44,6 +45,7 @@ s|^SANCTUM_STATEFUL_DOMAINS=.*|SANCTUM_STATEFUL_DOMAINS=${SANCTUM_STATEFUL_DOMAI
     && if [ -n \"${APP_KEY}\" ]; then sed -ri "s|^APP_KEY=.*|APP_KEY=${APP_KEY}|" .env; fi
 
 RUN if [ -z "${APP_KEY}" ]; then php artisan key:generate --force; fi
+RUN php artisan package:discover --ansi
 
 RUN mkdir -p database && touch database/database.sqlite
 
