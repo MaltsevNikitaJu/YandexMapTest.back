@@ -2,23 +2,17 @@ FROM php:8.3-apache
 
 WORKDIR /var/www/html
 
-# Установка системных зависимостей
+# Установка только самых необходимых зависимостей
 RUN apt-get update && apt-get install -y \
     curl \
     zip unzip \
     libzip-dev \
     libsqlite3-dev \
-    libcurl4-openssl-dev \
-    libxml2-dev \
     && docker-php-ext-install \
         zip \
         pdo_sqlite \
-        curl \
-        xml \
-        mbstring \
-        tokenizer \
-        ctype \
-        json
+        mysqli \
+        pdo
 
 # Включение mod_rewrite для Apache
 RUN a2enmod rewrite
@@ -52,8 +46,7 @@ RUN php artisan migrate --force
 
 # Кэшируем конфигурации для продакшена
 RUN php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache
+    php artisan route:cache
 
 EXPOSE 80
 
