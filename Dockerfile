@@ -19,14 +19,12 @@ RUN chmod -R 775 storage bootstrap/cache database
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 
+RUN php artisan migrate --force
 
 RUN php artisan config:clear
-RUN php artisan cache:clear
 RUN php artisan route:clear
 RUN php artisan view:clear
 
-
-RUN php artisan migrate --force
 
 EXPOSE 80
 
