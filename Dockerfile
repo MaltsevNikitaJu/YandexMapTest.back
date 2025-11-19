@@ -21,9 +21,9 @@ RUN composer install --no-dev --optimize-autoloader
 # Создаем базу данных
 RUN mkdir -p database && touch database/database.sqlite
 
-# Права доступа
-RUN chown -R www-data:www-data storage bootstrap cache database
-RUN chmod -R 775 storage bootstrap cache database
+# Права доступа 
+RUN chown -R www-data:www-data storage bootstrap/cache database
+RUN chmod -R 775 storage bootstrap/cache database
 
 # Настройка Apache
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
