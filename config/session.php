@@ -156,7 +156,7 @@ return [
     |
     */
 
-    'domain' => 'maltsevnikitaju-yandexmaptest-front-2e25.twc1.net',
+    'domain' => env('SESSION_DOMAIN', '.twc1.net'),
 
     /*
     |--------------------------------------------------------------------------
