@@ -2,12 +2,8 @@ FROM php:8.3-apache
 
 WORKDIR /var/www/html
 
-# Установка зависимостей
-RUN apt-get update && apt-get install -y \
-    curl \
-    unzip \
-    sqlite3 \
-    && docker-php-ext-install pdo pdo_sqlite
+# ТОЛЬКО минимальные пакеты для Composer
+RUN apt-get update && apt-get install -y curl unzip
 
 # Включение mod_rewrite и настройка ServerName
 RUN a2enmod rewrite
@@ -32,9 +28,6 @@ RUN chmod -R 775 storage bootstrap cache database
 # Настройка Apache
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-
-# Создаем .env из переменных окружения (важно!)
-RUN printenv | grep -E "^(APP|DB|SESSION|SANCTUM)_" > .env
 
 # Laravel команды
 RUN php artisan migrate --force
