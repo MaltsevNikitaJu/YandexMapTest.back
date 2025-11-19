@@ -1,4 +1,4 @@
-FROM php:8.3-fpm
+FROM php:8.3-apache
 
 WORKDIR /var/www/html
 
@@ -20,6 +20,9 @@ RUN apt-get update && apt-get install -y \
         ctype \
         json
 
+# Включение mod_rewrite для Apache
+RUN a2enmod rewrite
+
 # Установка Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
@@ -29,22 +32,29 @@ COPY . .
 # Устанавливаем зависимости
 RUN composer install --no-dev --optimize-autoloader
 
-# Создаем базу данных
+# Создаем базу данных SQLite
 RUN mkdir -p database && touch database/database.sqlite
 
-# Настраиваем права
-RUN chown -R www-data:www-data storage bootstrap/cache database
+# Настраиваем права доступа
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
 RUN chmod -R 775 storage bootstrap/cache database
 
-# Генерируем ключ и запускаем миграции
+# Настраиваем Apache для использования public директории
+ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+
+# Генерируем ключ приложения
 RUN php artisan key:generate --force
+
+# Выполняем миграции
 RUN php artisan migrate --force
 
-# Кэшируем для продакшена
-RUN php artisan config:cache
-RUN php artisan route:cache
-RUN php artisan view:cache
+# Кэшируем конфигурации для продакшена
+RUN php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
 
-EXPOSE 9000
+EXPOSE 80
 
-CMD ["php-fpm"]
+CMD ["apache2-foreground"]
